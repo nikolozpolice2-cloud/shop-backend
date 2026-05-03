@@ -18,9 +18,23 @@ def order():
     print("NEW ORDER:", data)
     return jsonify({"status": "ok"})
 
-@app.route("/orders", methods=["GET"])
-def get_orders():
-    return jsonify(orders)  # ⬅️ აქ ნახავ ყველას
+@app.route("/orders")
+def orders_page():
+    html = "<h1>Orders</h1>"
+
+    for o in orders:
+        html += "<div style='border:1px solid black; padding:10px; margin:10px;'>"
+        
+        if "items" in o:
+            for item in o["items"]:
+                name = item.get("name", "No name")
+                size = item.get("size", "No size")
+                
+                html += f"<p><b>{name}</b> - Size: {size}</p>"
+        
+        html += "</div>"
+
+    return html
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
