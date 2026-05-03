@@ -105,6 +105,61 @@ def orders():
         html += "</div>"
 
     return html
+    @app.route("/admin")
+def admin():
+    return """
+<!DOCTYPE html>
+<html>
+<head>
+<title>Admin Panel</title>
+
+<style>
+body { font-family: Arial; background:#f4f4f4; padding:20px; }
+.box { max-width:900px; margin:auto; background:white; padding:20px; border-radius:10px; }
+.order { border:1px solid #ddd; padding:15px; margin-bottom:10px; }
+</style>
+
+</head>
+<body>
+
+<div class="box">
+<h1>Orders Admin Panel</h1>
+<div id="orders"></div>
+</div>
+
+<script>
+
+fetch('/orders')
+.then(res => res.json())
+.then(data => {
+
+  let html = "";
+
+  data.forEach(o => {
+
+    let c = JSON.parse(o.data);
+
+    html += `
+      <div class="order">
+        <h3>Order #${o.id}</h3>
+        <p><b>Name:</b> ${c.customer.name}</p>
+        <p><b>Phone:</b> ${c.customer.phone}</p>
+        <p><b>Address:</b> ${c.customer.address}</p>
+        <p><b>Country:</b> ${c.customer.country}</p>
+        <p><b>Status:</b> ${o.status}</p>
+      </div>
+    `;
+  });
+
+  document.getElementById("orders").innerHTML = html;
+
+});
+
+</script>
+
+</body>
+</html>
+"""
 
 # ---------------- RUN ----------------
 if __name__ == "__main__":
