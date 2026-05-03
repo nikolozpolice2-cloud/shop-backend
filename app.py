@@ -6,7 +6,9 @@ import json
 app = Flask(__name__)
 CORS(app)
 
-# ---------------- DATABASE ----------------
+ADMIN_PASSWORD = "1234"
+
+# ---------------- DB ----------------
 def init_db():
     conn = sqlite3.connect("orders.db")
     c = conn.cursor()
@@ -27,7 +29,7 @@ init_db()
 def home():
     return "API WORKING"
 
-# ---------------- CREATE ORDER ----------------
+# ---------------- ORDER ----------------
 @app.route("/order", methods=["POST"])
 def order():
     try:
@@ -49,7 +51,7 @@ def order():
     except Exception as e:
         return jsonify({"error": str(e)})
 
-# ---------------- MARK AS SHIPPED ----------------
+# ---------------- SHIP ----------------
 @app.route("/ship/<int:order_id>")
 def ship(order_id):
     conn = sqlite3.connect("orders.db")
@@ -62,10 +64,9 @@ def ship(order_id):
 
     return "OK"
 
-# ---------------- ORDERS (JSON FOR ADMIN) ----------------
+# ---------------- ORDERS API ----------------
 @app.route("/orders")
 def orders():
-
     conn = sqlite3.connect("orders.db")
     c = conn.cursor()
     c.execute("SELECT id, data, status FROM orders")
@@ -83,25 +84,33 @@ def orders():
 
     return jsonify(result)
 
-# ---------------- ADMIN PAGE ----------------
+# ---------------- ADMIN ----------------
 @app.route("/admin")
 def admin():
+    password = request.args.get("pass")
+
+    if password != ADMIN_PASSWORD:
+        return "Access denied"
+
     return """
 <!DOCTYPE html>
 <html>
 <head>
 <title>Admin Panel</title>
+
 <style>
 body { font-family: Arial; background:#f4f4f4; padding:20px; }
 .box { max-width:900px; margin:auto; background:white; padding:20px; border-radius:10px; }
 .order { border:1px solid #ddd; padding:15px; margin-bottom:10px; }
+button { padding:8px 12px; margin-top:5px; }
 </style>
 </head>
 
 <body>
 
 <div class="box">
-<h1>Orders Admin Panel</h1>
+<h1>Admin Panel</h1>
+<button onclick="location.reload()">Refresh</button>
 <div id="orders"></div>
 </div>
 
@@ -125,6 +134,8 @@ fetch('/orders')
         <p><b>Address:</b> ${c.customer.address}</p>
         <p><b>Country:</b> ${c.customer.country}</p>
         <p><b>Status:</b> ${o.status}</p>
+
+        <a href='/ship/${o.id}'>Mark as shipped</a>
       </div>
     `;
   });
