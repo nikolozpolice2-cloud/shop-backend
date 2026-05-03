@@ -1,9 +1,70 @@
-@app.route("/orders")
-def orders_page():
-    from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 import sqlite3
 import json
+
+app = Flask(__name__)
+CORS(app)
+
+# ---------------- DATABASE ----------------
+def init_db():
+    conn = sqlite3.connect("orders.db")
+    c = conn.cursor()
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS orders (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            data TEXT,
+            status TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+init_db()
+
+# ---------------- HOME ----------------
+@app.route("/")
+def home():
+    return "API WORKING"
+
+# ---------------- CREATE ORDER ----------------
+@app.route("/order", methods=["POST"])
+def order():
+    try:
+        data = request.json
+
+        conn = sqlite3.connect("orders.db")
+        c = conn.cursor()
+
+        c.execute(
+            "INSERT INTO orders (data, status) VALUES (?, ?)",
+            (json.dumps(data), "pending")
+        )
+
+        conn.commit()
+        conn.close()
+
+        return jsonify({"status": "ok"})
+
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+# ---------------- MARK AS SHIPPED ----------------
+@app.route("/ship/<int:order_id>")
+def ship(order_id):
+    conn = sqlite3.connect("orders.db")
+    c = conn.cursor()
+
+    c.execute("UPDATE orders SET status='shipped' WHERE id=?", (order_id,))
+
+    conn.commit()
+    conn.close()
+
+    return "OK"
+
+# ---------------- VIEW ORDERS ----------------
+@app.route("/orders")
+def orders():
 
     conn = sqlite3.connect("orders.db")
     c = conn.cursor()
@@ -21,31 +82,30 @@ import json
         customer = data.get("customer", {})
         items = data.get("items", [])
 
-        html += "<div style='border:1px solid black; padding:10px; margin:10px;'>"
+        html += "<div style='border:1px solid #000; padding:10px; margin:10px;'>"
 
         html += f"<p><b>ID:</b> {order_id}</p>"
         html += f"<p><b>Status:</b> {status}</p>"
 
-        # 👤 CUSTOMER INFO
+        # customer info
         html += f"<p><b>Name:</b> {customer.get('name','')}</p>"
         html += f"<p><b>Phone:</b> {customer.get('phone','')}</p>"
         html += f"<p><b>Address:</b> {customer.get('address','')}</p>"
         html += f"<p><b>Country:</b> {customer.get('country','')}</p>"
         html += f"<p><b>ZIP:</b> {customer.get('zip','')}</p>"
 
-        # 🛒 ITEMS
+        # items
         html += "<hr><b>Items:</b><br>"
         for item in items:
-            name = item.get("name", "")
-            size = item.get("size", "")
-            price = item.get("price", "")
+            html += f"{item.get('name')} | Size: {item.get('size')} | ${item.get('price')}<br>"
 
-            html += f"<p>{name} | Size: {size} | ${price}</p>"
-
-        # 📦 ship button
         if status != "shipped":
-            html += f"<a href='/ship/{order_id}'>Mark as shipped</a>"
+            html += f"<br><a href='/ship/{order_id}'>Mark as shipped</a>"
 
         html += "</div>"
 
     return html
+
+# ---------------- RUN ----------------
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=10000)
