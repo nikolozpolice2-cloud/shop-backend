@@ -4,10 +4,8 @@ import sqlite3
 import json
 
 app = Flask(__name__)
+app.secret_key = "super_secret_key_123"
 CORS(app)
-
-ADMIN_PASSWORD = "1234"
-
 # ---------------- DB ----------------
 def init_db():
     conn = sqlite3.connect("orders.db")
