@@ -30,7 +30,7 @@ def home():
 # ---------------- ORDER ----------------
 @app.route("/admin")
 def admin():
-    return "ADMIN WORKS"
+    return "ADMIN WORKING"
     try:
         data = request.json
 
