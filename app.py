@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, session, redirect
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 import sqlite3
 import json
@@ -6,6 +6,9 @@ import json
 app = Flask(__name__)
 app.secret_key = "super_secret_key_123"
 CORS(app)
+
+ADMIN_PASSWORD = "1234"
+
 # ---------------- DB ----------------
 def init_db():
     conn = sqlite3.connect("orders.db")
@@ -27,10 +30,9 @@ init_db()
 def home():
     return "API WORKING"
 
-# ---------------- ORDER ----------------
-@app.route("/admin")
-def admin():
-    return "ADMIN WORKING"
+# ---------------- CREATE ORDER (CLICK = PENDING) ----------------
+@app.route("/order", methods=["POST"])
+def order():
     try:
         data = request.json
 
@@ -49,6 +51,19 @@ def admin():
 
     except Exception as e:
         return jsonify({"error": str(e)})
+
+# ---------------- MARK AS PAID (optional future) ----------------
+@app.route("/pay/<int:order_id>")
+def pay(order_id):
+    conn = sqlite3.connect("orders.db")
+    c = conn.cursor()
+
+    c.execute("UPDATE orders SET status='paid' WHERE id=?", (order_id,))
+
+    conn.commit()
+    conn.close()
+
+    return "PAID"
 
 # ---------------- SHIP ----------------
 @app.route("/ship/<int:order_id>")
@@ -83,13 +98,9 @@ def orders():
 
     return jsonify(result)
 
-# ---------------- ADMIN ----------------
+# ---------------- ADMIN (PROTECTED SIMPLE) ----------------
 @app.route("/admin")
 def admin():
-    password = request.args.get("pass")
-
-    if password != ADMIN_PASSWORD:
-        return "Access denied"
 
     return """
 <!DOCTYPE html>
