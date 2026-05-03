@@ -11,6 +11,16 @@ ADMIN_PASSWORD = "1234"
 
 # ---------------- DB ----------------
 def init_db():
+    c.execute("""
+CREATE TABLE IF NOT EXISTS products (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT,
+    size TEXT,
+    price REAL,
+    address TEXT,
+    image TEXT
+)
+""")
     conn = sqlite3.connect("orders.db")
     c = conn.cursor()
     c.execute("""
