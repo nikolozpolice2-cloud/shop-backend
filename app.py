@@ -62,64 +62,42 @@ def ship(order_id):
 
     return "OK"
 
-# ---------------- VIEW ORDERS ----------------
+# ---------------- ORDERS (JSON FOR ADMIN) ----------------
 @app.route("/orders")
 def orders():
 
     conn = sqlite3.connect("orders.db")
     c = conn.cursor()
-    c.execute("SELECT * FROM orders")
+    c.execute("SELECT id, data, status FROM orders")
     rows = c.fetchall()
     conn.close()
 
-    html = "<h1>Orders</h1>"
+    result = []
 
-    for row in rows:
-        order_id = row[0]
-        data = json.loads(row[1])
-        status = row[2]
+    for r in rows:
+        result.append({
+            "id": r[0],
+            "data": r[1],
+            "status": r[2]
+        })
 
-        customer = data.get("customer", {})
-        items = data.get("items", [])
+    return jsonify(result)
 
-        html += "<div style='border:1px solid #000; padding:10px; margin:10px;'>"
-
-        html += f"<p><b>ID:</b> {order_id}</p>"
-        html += f"<p><b>Status:</b> {status}</p>"
-
-        # customer info
-        html += f"<p><b>Name:</b> {customer.get('name','')}</p>"
-        html += f"<p><b>Phone:</b> {customer.get('phone','')}</p>"
-        html += f"<p><b>Address:</b> {customer.get('address','')}</p>"
-        html += f"<p><b>Country:</b> {customer.get('country','')}</p>"
-        html += f"<p><b>ZIP:</b> {customer.get('zip','')}</p>"
-
-        # items
-        html += "<hr><b>Items:</b><br>"
-        for item in items:
-            html += f"{item.get('name')} | Size: {item.get('size')} | ${item.get('price')}<br>"
-
-        if status != "shipped":
-            html += f"<br><a href='/ship/{order_id}'>Mark as shipped</a>"
-
-        html += "</div>"
-
-    return html
-    @app.route("/admin")
+# ---------------- ADMIN PAGE ----------------
+@app.route("/admin")
 def admin():
     return """
 <!DOCTYPE html>
 <html>
 <head>
 <title>Admin Panel</title>
-
 <style>
 body { font-family: Arial; background:#f4f4f4; padding:20px; }
 .box { max-width:900px; margin:auto; background:white; padding:20px; border-radius:10px; }
 .order { border:1px solid #ddd; padding:15px; margin-bottom:10px; }
 </style>
-
 </head>
+
 <body>
 
 <div class="box">
