@@ -30,8 +30,9 @@ def home():
     return "API WORKING"
 
 # ---------------- ORDER ----------------
-@app.route("/order", methods=["POST"])
-def order():
+@app.route("/admin")
+def admin():
+    return "ADMIN WORKS"
     try:
         data = request.json
 
